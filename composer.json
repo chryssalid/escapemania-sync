@@ -1,0 +1,17 @@
+{
+    "name": "chryssalid/escapemania-sync",
+    "description": "Escapemania wordpress calendar sync plugin",
+    "type": "wordpress-plugin",
+    "require": {
+        "php": ">=5.4.0",
+        "chryssalid/rest-communication": "^1.0"
+    },
+    "license": "gpl-3.0",
+    "authors": [
+        {
+            "name": "Łukasz Feller",
+            "email": "lukaszfeller@gmail.com"
+        }
+    ],
+    "minimum-stability": "dev"
+}
