@@ -16,43 +16,58 @@ global $escapemaniaSync;
 define('ESCAPEMANIA_PLUGIN_DIR', dirname(__FILE__), true);
 define('ESCAPEMANIA_PLUGIN_FILE', __FILE__, true);
 
+require_once ESCAPEMANIA_PLUGIN_DIR . '/classes/Api.php';
 require_once ESCAPEMANIA_PLUGIN_DIR . '/plugins/EscapemaniaPluginInterface.php';
 require_once ESCAPEMANIA_PLUGIN_DIR . '/plugins/EscapemaniaBooked.class.php';
 
 class EscapemaniaSync {
 
+	/**
+	 * @var Api
+	 */
+	protected $api;
+
 	protected $plugins = array();
 	protected $selectedTab;
 
+	protected $RESTCommunication;
+
 	public function __construct() {
 		$this->options = get_option("escapemania_settings");
-		$this->selectedTab = isset($_GET['tab']) ? $_GET['tab'] : 'settings';
 
-		add_action('init', array(&$this, 'init'));
-
-		$this->plugins['booked'] = new EscapemaniaBooked(get_option('escapemania_booked'));
+		$this->plugins['booked'] = new EscapemaniaBooked($this->getApi());
 		foreach ($this->plugins as $plugin) {
 			$plugin->init();
 		}
+
+		add_action('init', array(&$this, 'callback'));
 
 		if (!session_id()) {
 			session_start();
 		}
 
 		if (is_admin()) {
-			add_action('admin_init', array(&$this, 'adminInit'));
+			$this->selectedTab = isset($_GET['tab']) ? $_GET['tab'] : 'settings';
+			add_action('admin_init', array(&$this, 'registerSettings'));
 			add_action('admin_menu', array(&$this, 'adminMenu'));
 		}
 	}
 
-	public function init() {
-		add_rewrite_tag('%escapemania_api%', '([^&]+)');
-		add_rewrite_rule('escapemania-api', 'index.php?escapemania_api=1', 'top');
+	/**
+	 * 
+	 */
+	public function callback() {
+		if (isset($_GET['escapemania_sync']) && $_GET['escapemania_sync'] === 'callback') {
+			$api = $this->getApi();
+			exit;
+		}
 	}
 
-	public function adminInit() {
+	public function registerSettings() {
 		register_setting('escapemania-admin', 'escapemania_settings');
 		$options = $this->options;
+
+		$sync_url = get_site_url() . '/?escapemania_sync=callback';
 
 		add_settings_section(
 			'escapemania_settings_section',
@@ -67,7 +82,7 @@ class EscapemaniaSync {
 			'api_key',
 			'Klucz API',
 			function() use($options) {
-				echo '<input style="min-width: 300px;" name="escapemania_settings[api_key]"  type="text" value="' . isset($options['api_key']) ? $options['api_key'] : '' . '" />';
+				echo '<input style="min-width: 300px;" name="escapemania_settings[api_key]"  type="text" value="' . (isset($options['api_key']) ? $options['api_key'] : '') . '" />';
 			},
 			'escapemania-admin',
 			'escapemania_settings_section',
@@ -78,7 +93,7 @@ class EscapemaniaSync {
 			'api_secret',
 			'API secret',
 			function() use($options) {
-				echo '<input style="min-width: 300px;" name="escapemania_settings[api_secret]"  type="text" value="' . isset($options['api_secret']) ? $options['api_secret'] : '' . '" />';
+				echo '<input style="min-width: 300px;" name="escapemania_settings[api_secret]"  type="text" value="' . (isset($options['api_secret']) ? $options['api_secret'] : '') . '" />';
 			},
 			'escapemania-admin',
 			'escapemania_settings_section',
@@ -88,8 +103,8 @@ class EscapemaniaSync {
 		add_settings_field(
 			'api_url',
 			'Adres URL synchronizacji',
-			function() use($options) {
-				echo '<input style="min-width: 400px;" readonly name="escapemania_settings[api_url]"  type="text" value="' . get_site_url() . '/escapemania-api/" />';
+			function() use($sync_url) {
+				echo '<input style="min-width: 400px;" readonly name="escapemania_settings[api_url]"  type="text" value="' . $sync_url . '" />';
 			},
 			'escapemania-admin',
 			'escapemania_settings_section',
@@ -98,9 +113,22 @@ class EscapemaniaSync {
 
 		add_settings_field(
 			'app_is_registered',
-			'Status rejestracji aplikacji',
+			'Status rejestracji aplikacji WP',
 			function() use($options) {
-				echo '<input style="min-width: 400px;" readonly name="escapemania_settings[api_is_registered]"  type="hidden" value="' . isset($options['api_is_registered']) ? $options['api_is_registered'] : '' .'" />';
+				$registerUrl = '<a href="?page=escapemania_settings&amp;tab=settings&amp;register=1">zarejestruj</a>';
+				// sprawdzenie statusu aplikacji
+				$api = $this->getApi();
+				if ($api === null) {
+					echo 'niezarejestrowana - ' . $registerUrl;
+				} else {
+					$registerResult = $api->registerSyncUrl($options['api_url']);
+					if ($registerResult) {
+						echo 'zarejestrowana';
+					}
+					else {
+						echo 'niezarejestrowana - ' . $api->getLastError() . ' - ' . $registerUrl;
+					}
+				}
 			},
 			'escapemania-admin',
 			'escapemania_settings_section',
@@ -132,7 +160,7 @@ class EscapemaniaSync {
 				<?php endforeach ?>
 			</h2>
 
-			<form method="post" action="options.php">
+			<form method="post" action="options.php?escapemania_settings_updated=1">
 				<?php
 				switch ($this->selectedTab) {
 					case 'settings':
@@ -156,6 +184,13 @@ class EscapemaniaSync {
 	public function renderApiSettingsPage() {
 		settings_fields('escapemania-admin');
 		do_settings_sections('escapemania-admin');
+	}
+
+	public function getApi() {
+		if ($this->api === null && !empty($this->options['api_key']) && !empty($this->options['api_secret'])) {
+			$this->api = new Api($this->options['api_key'], $this->options['api_secret']);
+		}
+		return $this->api;
 	}
 }
 

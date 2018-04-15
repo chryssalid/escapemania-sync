@@ -4,20 +4,20 @@
         "Read more about it at https://getcomposer.org/doc/01-basic-usage.md#composer-lock-the-lock-file",
         "This file is @generated automatically"
     ],
-    "content-hash": "ad2433f5c7b781ab5a4a577d9da3c159",
+    "content-hash": "da6abf9a272291042379f55c31a71539",
     "packages": [
         {
             "name": "chryssalid/rest-communication",
-            "version": "1.0.1",
+            "version": "1.0.2",
             "source": {
                 "type": "git",
                 "url": "https://github.com/chryssalid/rest-communication.git",
-                "reference": "dd5da516d5771eda79e000642479db7e7247a53c"
+                "reference": "c66805d4422470f09c2da2854e7461feada50e03"
             },
             "dist": {
                 "type": "zip",
-                "url": "https://api.github.com/repos/chryssalid/rest-communication/zipball/dd5da516d5771eda79e000642479db7e7247a53c",
-                "reference": "dd5da516d5771eda79e000642479db7e7247a53c",
+                "url": "https://api.github.com/repos/chryssalid/rest-communication/zipball/c66805d4422470f09c2da2854e7461feada50e03",
+                "reference": "c66805d4422470f09c2da2854e7461feada50e03",
                 "shasum": ""
             },
             "require": {
@@ -41,15 +41,20 @@
                 }
             ],
             "description": "REST client & server.",
-            "time": "2018-03-29T01:10:42+00:00"
+            "keywords": [
+                "rest"
+            ],
+            "time": "2018-04-03T00:40:31+00:00"
         }
     ],
     "packages-dev": [],
     "aliases": [],
-    "minimum-stability": "stable",
+    "minimum-stability": "dev",
     "stability-flags": [],
     "prefer-stable": false,
     "prefer-lowest": false,
-    "platform": [],
+    "platform": {
+        "php": ">=5.4.0"
+    },
     "platform-dev": []
 }
