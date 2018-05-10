@@ -137,6 +137,7 @@ class EscapemaniaSync {
 
 		foreach ($this->plugins as $plugin) {
 			$plugin->registerSettings();
+			$plugin->adminInit();
 		}
 	}
 

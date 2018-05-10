@@ -23,7 +23,9 @@ class Api {
 				return $response;
 			}
 			else {
-				$this->lastError = $response['message'];
+				if (isset($response['message'])) {
+					$this->lastError = $response['message'];
+				}
 			}
 		} else {
 			$this->lastError = $this->RESTCommunication->getError();
@@ -45,6 +47,7 @@ class Api {
 	}
 
 	/**
+	 * Zwraca informacje o aktywnych pokojach.
 	 * @return array
 	 */
 	public function getRooms() {
@@ -53,6 +56,37 @@ class Api {
 			return $response['rooms'];
 		}
 		return [];
+	}
+
+	/**
+	 * Zwraca listę rezerwacji dla wybranych pokoi
+	 * @param int $ids
+	 * @param DateTime $from
+	 * @param DateTime $to
+	 * @return array
+	 */
+	public function getBooking($ids = [], DateTime $from = null, DateTime $to = null) {
+		if ($from === null || !($from instanceof DateTime)) {
+			$from = new DateTime;
+		}
+		if ($to === null || !($to instanceof DateTime)) {
+			$to = new DateTime;
+		}
+		$response = $this->validateResponse($this->RESTCommunication->request('get-booking', ['ids' => $ids, 'from' => $from->format('Y-m-d'), 'to' => $to->format('Y-m-d')]));
+		if ($response) {
+			return $response['bookings'];
+		}
+		return [];
+	}
+
+	/**
+	 * Umieszcza listę rezerwacji.
+	 * @param array $bookings
+	 * @return string[]
+	 */
+	public function putBooking($bookings) {
+		$response = $this->validateResponse($this->RESTCommunication->request('put-booking', $bookings, RESTCommunication::CALL_METHOD_PUT));
+		return $response;
 	}
 
 	public function read() {
